@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PyPiPie Shell Help</title>
+  <style>
+    :root {
+      --bg: #f7f8fa;
+      --panel: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #d1d5db;
+      --accent: #2563eb;
+      --good: #dff5df;
+      --warn: #fff6cc;
+      --bad: #fde2e2;
+      --code: #f3f4f6;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Segoe UI, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+    .wrap {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    .hero, .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    }
+    .hero {
+      padding: 28px;
+      margin-bottom: 18px;
+    }
+    h1, h2, h3 {
+      margin: 0 0 12px;
+      line-height: 1.2;
+    }
+    h1 { font-size: 30px; }
+    h2 { font-size: 22px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+    h3 { font-size: 17px; }
+    p { margin: 0 0 12px; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+    .card { padding: 18px; }
+    .muted { color: var(--muted); }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      background: #eef2ff;
+      color: #3730a3;
+      margin-right: 6px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      margin: 12px 0 18px;
+    }
+    th, td {
+      text-align: left;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    th { background: #f9fafb; }
+    tr:last-child td { border-bottom: none; }
+    code, kbd {
+      font-family: Consolas, Monaco, monospace;
+      font-size: 0.95em;
+    }
+    code {
+      background: var(--code);
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+    kbd {
+      display: inline-block;
+      padding: 2px 7px;
+      border: 1px solid #c7ccd1;
+      border-bottom-width: 2px;
+      border-radius: 6px;
+      background: #fff;
+      box-shadow: inset 0 -1px 0 rgba(0,0,0,0.04);
+      margin: 0 2px 2px 0;
+      white-space: nowrap;
+    }
+    .status {
+      border-left: 6px solid var(--border);
+      padding: 12px 14px;
+      border-radius: 8px;
+      margin: 10px 0;
+      background: #fff;
+    }
+    .status.good { border-left-color: #65a30d; background: var(--good); }
+    .status.warn { border-left-color: #ca8a04; background: var(--warn); }
+    .status.bad  { border-left-color: #dc2626; background: var(--bad); }
+    .toc a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+    .toc a:hover { text-decoration: underline; }
+    ul { margin: 8px 0 12px 22px; }
+    .footer {
+      margin-top: 24px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="hero">
+      <div>
+        <span class="badge">Modal</span>
+        <span class="badge">Revit / pyRevit</span>
+        <span class="badge">Mini IDE</span>
+      </div>
+      <h1>PyPiPie Shell Help</h1>
+      <p>This help page describes the current <strong>modal</strong> PyPiPie Shell for pyRevit / Revit. It covers editor behavior, buttons, shortcuts, file actions, run behavior, and status colors.</p>
+      <p class="muted">Because the tool is modal, it stays stable inside Revit and avoids the modeless focus and event issues that were causing trouble earlier.</p>
+    </div>
+
+    <div class="card toc">
+      <h2>Contents</h2>
+      <p><a href="#overview">Overview</a> · <a href="#layout">Window Layout</a> · <a href="#toolbar">Toolbar Buttons</a> · <a href="#shortcuts">Keyboard Shortcuts</a> · <a href="#files">File Operations</a> · <a href="#run">Running Code</a> · <a href="#status">Status Colors</a> · <a href="#dialogs">Dialogs</a> · <a href="#tips">Tips</a></p>
+    </div>
+
+    <div id="overview" class="grid">
+      <div class="card">
+        <h3>What it is</h3>
+        <p>A simple Python editor and execution window for Revit/pyRevit, built as a modal WPF dialog. The editor uses a multiline text box with line numbers and an output pane.</p>
+      </div>
+      <div class="card">
+        <h3>What it exposes</h3>
+        <p>Your run scope includes <code>doc</code>, <code>uidoc</code>, <code>uiapp</code>, <code>app</code>, <code>revit</code>, <code>sys</code>, <code>clr</code>, and <code>from Autodesk.Revit.DB import *</code>.</p>
+      </div>
+      <div class="card">
+        <h3>Why modal matters</h3>
+        <p>The shell opens with a blocking dialog. That keeps input, focus, and direct execution predictable inside Revit.</p>
+      </div>
+    </div>
+
+    <div id="layout" class="card">
+      <h2>Window Layout</h2>
+      <ul>
+        <li><strong>Top toolbar:</strong> file, search, and editing commands.</li>
+        <li><strong>Editor:</strong> multiline code input with line numbers.</li>
+        <li><strong>Splitter:</strong> drag to resize editor vs output.</li>
+        <li><strong>Output pane:</strong> standard output and error / traceback display.</li>
+        <li><strong>Status bar:</strong> file state, caret position, and color feedback.</li>
+        <li><strong>Bottom row:</strong> Clear Output, Run, and Close.</li>
+      </ul>
+    </div>
+
+    <div id="toolbar" class="card">
+      <h2>Toolbar Buttons</h2>
+      <table>
+        <thead>
+          <tr><th>Button</th><th>Action</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>New</td><td>Creates a new editor buffer. If the current file is modified, you will be asked whether to save first.</td></tr>
+          <tr><td>Open</td><td>Loads a Python file into the editor.</td></tr>
+          <tr><td>Save</td><td>Saves to the current file path. If no file exists yet, it behaves like Save As.</td></tr>
+          <tr><td>Save As</td><td>Saves the current editor contents to a new file.</td></tr>
+          <tr><td>Find</td><td>Searches for text in the current editor contents.</td></tr>
+          <tr><td>Go To</td><td>Moves the caret to a target line number.</td></tr>
+          <tr><td>#</td><td>Comments the selected lines by inserting <code># </code> after indentation.</td></tr>
+          <tr><td>-</td><td>Uncomments selected lines by removing a leading <code>#</code> or <code># </code>.</td></tr>
+          <tr><td>&gt;</td><td>Indents selected lines by four spaces.</td></tr>
+          <tr><td>&lt;</td><td>Outdents selected lines by removing indentation.</td></tr>
+          <tr><td>Duplicate</td><td>Duplicates the current line or selected block.</td></tr>
+          <tr><td>Delete Lines</td><td>Deletes the current line or selected line block.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div id="shortcuts" class="card">
+      <h2>Keyboard Shortcuts</h2>
+      <table>
+        <thead>
+          <tr><th>Shortcut</th><th>Action</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><kbd>Ctrl</kbd><kbd>Enter</kbd></td><td>Run current editor contents.</td></tr>
+          <tr><td><kbd>Ctrl</kbd><kbd>S</kbd></td><td>Save.</td></tr>
+          <tr><td><kbd>Ctrl</kbd><kbd>O</kbd></td><td>Open.</td></tr>
+          <tr><td><kbd>Ctrl</kbd><kbd>N</kbd></td><td>New file.</td></tr>
+          <tr><td><kbd>Ctrl</kbd><kbd>F</kbd></td><td>Find.</td></tr>
+          <tr><td><kbd>Ctrl</kbd><kbd>G</kbd></td><td>Go To line.</td></tr>
+          <tr><td><kbd>Ctrl</kbd><kbd>A</kbd></td><td>Select all editor text.</td></tr>
+          <tr><td><kbd>Ctrl</kbd><kbd>D</kbd></td><td>Duplicate line(s).</td></tr>
+          <tr><td><kbd>Ctrl</kbd><kbd>L</kbd></td><td>Delete line(s).</td></tr>
+          <tr><td><kbd>Ctrl</kbd><kbd>/</kbd></td><td>Comment selection.</td></tr>
+          <tr><td><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>/</kbd></td><td>Uncomment selection.</td></tr>
+          <tr><td><kbd>Ctrl</kbd><kbd>-</kbd></td><td>Uncomment selection.</td></tr>
+          <tr><td><kbd>Tab</kbd></td><td>Indent selected lines.</td></tr>
+          <tr><td><kbd>Shift</kbd><kbd>Tab</kbd></td><td>Outdent selected lines.</td></tr>
+          <tr><td><kbd>Alt</kbd><kbd>Up</kbd></td><td>Load previous run-history buffer into the editor.</td></tr>
+          <tr><td><kbd>Alt</kbd><kbd>Down</kbd></td><td>Load next run-history buffer into the editor.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div id="files" class="card">
+      <h2>File Operations</h2>
+      <p>The editor works with normal <code>.py</code> files. Opening a file replaces the current editor contents. Save writes the entire editor buffer to disk.</p>
+      <p>When unsaved changes exist and you attempt to start a new file, open a different file, or close the window, a custom large-text dialog asks whether to save changes first.</p>
+      <div class="status warn"><strong>Unsaved changes prompt:</strong> Yes = save first, No = discard changes, Cancel = stay in the editor.</div>
+    </div>
+
+    <div id="run" class="card">
+      <h2>Running Code</h2>
+      <p>When you run code, the editor contents are normalized to <code>\n</code> line endings and then executed with <code>exec(...)</code> inside the current scope.</p>
+      <ul>
+        <li>The output pane inserts a separator line: <code>--- Run ---</code></li>
+        <li>Standard output is shown in black.</li>
+        <li>Tracebacks and errors are shown in red.</li>
+        <li>Successful runs end with <code>[done]</code>.</li>
+        <li>Executed buffers are stored in run history for <kbd>Alt</kbd><kbd>Up</kbd> / <kbd>Alt</kbd><kbd>Down</kbd>.</li>
+      </ul>
+      <p>Because the shell seeds Revit context objects, you can run small Revit API inspection scripts directly, for example:</p>
+      <p><code>print(doc.Title)</code></p>
+    </div>
+
+    <div id="status" class="card">
+      <h2>Status Colors</h2>
+      <p>The status bar text updates after actions and briefly changes background color for feedback.</p>
+      <div class="status good"><strong>PaleGreen:</strong> save succeeded, for messages beginning with <code>Saved</code>.</div>
+      <div class="status warn"><strong>LightGoldenrodYellow:</strong> info actions such as open, new file, run completed, and clear output.</div>
+      <div class="status bad"><strong>MistyRose:</strong> errors and failed runs. Error color stays until the next status change.</div>
+      <p>Non-error informational colors fade back to transparent automatically after a short delay.</p>
+    </div>
+
+    <div id="dialogs" class="card">
+      <h2>Dialogs</h2>
+      <p>The shell includes a custom large-text message box helper instead of the default tiny Revit/.NET message box. These dialogs support icons and keyboard shortcuts.</p>
+      <table>
+        <thead>
+          <tr><th>Dialog Type</th><th>Icon</th><th>Keyboard</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Info</td><td><strong>i</strong></td><td><kbd>Enter</kbd> = OK</td></tr>
+          <tr><td>Warning</td><td><strong>!</strong></td><td><kbd>Y</kbd> = Yes, <kbd>N</kbd> = No, <kbd>C</kbd> = Cancel, <kbd>Esc</kbd> = Cancel, <kbd>Enter</kbd> = primary button</td></tr>
+          <tr><td>Error</td><td><strong>×</strong></td><td><kbd>Enter</kbd> = OK, <kbd>Esc</kbd> = Cancel if present</td></tr>
+          <tr><td>Question</td><td><strong>?</strong></td><td><kbd>O</kbd> = OK when present, <kbd>C</kbd> = Cancel, <kbd>Esc</kbd> = Cancel</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div id="tips" class="card">
+      <h2>Tips</h2>
+      <ul>
+        <li>Use the shell for small inspection scripts, quick data checks, or API experiments.</li>
+        <li>If a run fails, read the red traceback in the output pane first; the status bar will also turn red.</li>
+        <li>Use <kbd>Ctrl</kbd><kbd>D</kbd> and <kbd>Ctrl</kbd><kbd>L</kbd> to work quickly on repeated line edits.</li>
+        <li>If you want to preserve your editor buffer before experimenting, save it first so the status bar confirms with PaleGreen.</li>
+        <li>Because this tool is modal, close it before continuing normal Revit commands.</li>
+      </ul>
+    </div>
+
+    <div class="footer">
+      <p>File: <code>help.html</code></p>
+    </div>
+  </div>
+</body>
+</html>
