@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-#Note:Error line 2024...
+# Errors to fix...
+# Basic UI working...
+
 import clr
 import sys
 import os
@@ -2024,6 +2026,9 @@ while True:
     except:
         app = None
 
+    if session.scope is None:
+        session.scope = {}
+
     session.scope["__revit__"] = uiapp
     session.scope["uiapp"] = uiapp
     session.scope["uidoc"] = uidoc
@@ -2051,9 +2056,21 @@ while True:
         session.status_text = "Run completed"
         session.history.append(code)
         session.history_index = len(session.history)
-    except Exception:
-        append_state_output(session, traceback.format_exc(), True)
+
+    except BaseException:
+        try:
+            append_state_output(session, traceback.format_exc(), True)
+        except:
+            append_state_output(session, "Unhandled execution error.\n", True)
         session.status_text = "Run failed"
+
+    except:
+        try:
+            append_state_output(session, traceback.format_exc(), True)
+        except:
+            append_state_output(session, "Unknown execution error.\n", True)
+        session.status_text = "Run failed"
+
     finally:
         sys.stdout = old_stdout
         sys.stderr = old_stderr
