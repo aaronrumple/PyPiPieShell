@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
-# Errors to fix...
-# Basic UI working...
-
 import clr
 import sys
 import os
 import traceback
+import System
 
 clr.AddReference("PresentationCore")
 clr.AddReference("PresentationFramework")
@@ -1984,20 +1982,7 @@ class ShellWindow(object):
             args.Handled = True
             return
 
-
-session = ShellSessionState()
-
-while True:
-    shell = ShellWindow(session)
-    shell.show()
-
-    session = shell.state
-
-    if not shell.run_requested:
-        break
-
-    code = shell.run_code or ""
-
+def run_session_code(session, code):
     uiapp = None
     uidoc = None
     doc = None
@@ -2051,17 +2036,34 @@ while True:
 
     try:
         append_state_output(session, "\n--- Run ---\n", False)
+
+        code = (code or "").replace("\r\n", "\n").replace("\r", "\n")
+
         exec(code, session.scope, session.scope)
         append_state_output(session, "[done]\n", False)
         session.status_text = "Run completed"
         session.history.append(code)
         session.history_index = len(session.history)
 
+    except System.Exception:
+        try:
+            append_state_output(session, traceback.format_exc(), True)
+        except:
+            append_state_output(session, "System.Exception during execution.\n", True)
+        session.status_text = "Run failed"
+
+    except Exception:
+        try:
+            append_state_output(session, traceback.format_exc(), True)
+        except:
+            append_state_output(session, "Python exception during execution.\n", True)
+        session.status_text = "Run failed"
+
     except BaseException:
         try:
             append_state_output(session, traceback.format_exc(), True)
         except:
-            append_state_output(session, "Unhandled execution error.\n", True)
+            append_state_output(session, "BaseException during execution.\n", True)
         session.status_text = "Run failed"
 
     except:
@@ -2074,3 +2076,70 @@ while True:
     finally:
         sys.stdout = old_stdout
         sys.stderr = old_stderr
+
+session = ShellSessionState()
+
+try:
+    while True:
+        shell = ShellWindow(session)
+        shell.show()
+
+        session = shell.state
+
+        if not shell.run_requested:
+            break
+
+        code = shell.run_code or ""
+        run_session_code(session, code)
+
+except System.Exception:
+    try:
+        append_state_output(session, traceback.format_exc(), True)
+    except:
+        pass
+
+    try:
+        session.status_text = "Shell failed"
+        shell = ShellWindow(session)
+        shell.show()
+    except:
+        pass
+
+except Exception:
+    try:
+        append_state_output(session, traceback.format_exc(), True)
+    except:
+        pass
+
+    try:
+        session.status_text = "Shell failed"
+        shell = ShellWindow(session)
+        shell.show()
+    except:
+        pass
+
+except BaseException:
+    try:
+        append_state_output(session, traceback.format_exc(), True)
+    except:
+        pass
+
+    try:
+        session.status_text = "Shell failed"
+        shell = ShellWindow(session)
+        shell.show()
+    except:
+        pass
+
+except:
+    try:
+        append_state_output(session, "Fatal shell error.\n", True)
+    except:
+        pass
+
+    try:
+        session.status_text = "Shell failed"
+        shell = ShellWindow(session)
+        shell.show()
+    except:
+        pass
