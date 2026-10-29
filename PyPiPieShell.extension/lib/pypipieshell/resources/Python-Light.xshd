@@ -1,0 +1,229 @@
+<?xml version="1.0"?>
+<!-- PyPiPie Shell - Python highlighting (PyPiPie-Python-Light).
+     Colours tuned for the pyRevit 7 light editor surface. -->
+<SyntaxDefinition name="PyPiPie-Python-Light" extensions=".py;.pyi"
+                  xmlns="http://icsharpcode.net/sharpdevelop/syntaxdefinition/2008">
+  <Color name="Comment"     foreground="#3F7F3F" fontStyle="italic" />
+  <Color name="String"      foreground="#A31515" />
+  <Color name="DocString"   foreground="#7A5C2E" />
+  <Color name="Escape"      foreground="#EE0000" />
+  <Color name="Number"      foreground="#098658" />
+  <Color name="Keyword"     foreground="#0000FF" fontWeight="bold" />
+  <Color name="ControlFlow" foreground="#AF00DB" fontWeight="bold" />
+  <Color name="Exception"   foreground="#AF00DB" fontWeight="bold" />
+  <Color name="DefKeyword"  foreground="#0000FF" fontWeight="bold" />
+  <Color name="Constant"    foreground="#0000FF" fontWeight="bold" />
+  <Color name="SelfCls"     foreground="#7A5C99" fontStyle="italic" />
+  <Color name="Builtin"     foreground="#267F99" />
+  <Color name="Context"     foreground="#B5651D" fontWeight="bold" />
+  <Color name="Decorator"   foreground="#795E26" />
+  <Color name="ClassName"   foreground="#267F99" fontWeight="bold" />
+  <Color name="FuncName"    foreground="#795E26" />
+  <Color name="Call"        foreground="#5C4A1F" />
+  <Color name="Dunder"      foreground="#7A5C99" />
+  <Color name="Operator"    foreground="#444444" />
+
+  <RuleSet ignoreCase="false">
+    <!-- triple-quoted strings / docstrings, optional u/b/r prefix -->
+    <Span color="DocString" multiline="true">
+      <Begin>[uUbBrR]{0,2}"""</Begin>
+      <End>"""</End>
+      <RuleSet><Span color="Escape" begin="\\" end="." /></RuleSet>
+    </Span>
+    <Span color="DocString" multiline="true">
+      <Begin>[uUbBrR]{0,2}'''</Begin>
+      <End>'''</End>
+      <RuleSet><Span color="Escape" begin="\\" end="." /></RuleSet>
+    </Span>
+
+    <Span color="Comment">
+      <Begin>\#</Begin>
+    </Span>
+
+    <Span color="String">
+      <Begin>[uUbBrRfF]{0,2}"</Begin>
+      <End>"|$</End>
+      <RuleSet><Span color="Escape" begin="\\" end="." /></RuleSet>
+    </Span>
+    <Span color="String">
+      <Begin>[uUbBrRfF]{0,2}'</Begin>
+      <End>'|$</End>
+      <RuleSet><Span color="Escape" begin="\\" end="." /></RuleSet>
+    </Span>
+
+    <Rule color="Decorator">^\s*@[\w\.]+</Rule>
+    <Rule color="ClassName">(?&lt;=\bclass\s+)[A-Za-z_]\w*</Rule>
+    <Rule color="FuncName">(?&lt;=\bdef\s+)[A-Za-z_]\w*</Rule>
+
+    <Keywords color="DefKeyword">
+      <Word>def</Word>
+      <Word>class</Word>
+    </Keywords>
+    <Keywords color="Constant">
+      <Word>True</Word>
+      <Word>False</Word>
+      <Word>None</Word>
+      <Word>NotImplemented</Word>
+      <Word>Ellipsis</Word>
+    </Keywords>
+    <Keywords color="SelfCls">
+      <Word>self</Word>
+      <Word>cls</Word>
+    </Keywords>
+    <Keywords color="Keyword">
+      <Word>and</Word>
+      <Word>as</Word>
+      <Word>assert</Word>
+      <Word>del</Word>
+      <Word>exec</Word>
+      <Word>global</Word>
+      <Word>in</Word>
+      <Word>is</Word>
+      <Word>lambda</Word>
+      <Word>nonlocal</Word>
+      <Word>not</Word>
+      <Word>or</Word>
+      <Word>pass</Word>
+      <Word>print</Word>
+      <Word>with</Word>
+    </Keywords>
+    <Keywords color="ControlFlow">
+      <Word>break</Word>
+      <Word>continue</Word>
+      <Word>elif</Word>
+      <Word>else</Word>
+      <Word>for</Word>
+      <Word>if</Word>
+      <Word>return</Word>
+      <Word>while</Word>
+      <Word>yield</Word>
+      <Word>import</Word>
+      <Word>from</Word>
+      <Word>async</Word>
+      <Word>await</Word>
+    </Keywords>
+    <Keywords color="Exception">
+      <Word>except</Word>
+      <Word>finally</Word>
+      <Word>raise</Word>
+      <Word>try</Word>
+    </Keywords>
+    <Keywords color="Context">
+      <Word>doc</Word>
+      <Word>uidoc</Word>
+      <Word>uiapp</Word>
+      <Word>app</Word>
+      <Word>__revit__</Word>
+      <Word>DB</Word>
+      <Word>UI</Word>
+      <Word>revit</Word>
+      <Word>forms</Word>
+      <Word>script</Word>
+      <Word>selection</Word>
+      <Word>active_view</Word>
+      <Word>clr</Word>
+      <Word>System</Word>
+    </Keywords>
+    <Keywords color="Builtin">
+      <Word>abs</Word>
+      <Word>all</Word>
+      <Word>any</Word>
+      <Word>apply</Word>
+      <Word>basestring</Word>
+      <Word>bin</Word>
+      <Word>bool</Word>
+      <Word>buffer</Word>
+      <Word>bytearray</Word>
+      <Word>bytes</Word>
+      <Word>callable</Word>
+      <Word>chr</Word>
+      <Word>classmethod</Word>
+      <Word>cmp</Word>
+      <Word>compile</Word>
+      <Word>complex</Word>
+      <Word>delattr</Word>
+      <Word>dict</Word>
+      <Word>dir</Word>
+      <Word>divmod</Word>
+      <Word>enumerate</Word>
+      <Word>eval</Word>
+      <Word>execfile</Word>
+      <Word>filter</Word>
+      <Word>float</Word>
+      <Word>format</Word>
+      <Word>frozenset</Word>
+      <Word>getattr</Word>
+      <Word>globals</Word>
+      <Word>hasattr</Word>
+      <Word>hash</Word>
+      <Word>help</Word>
+      <Word>hex</Word>
+      <Word>id</Word>
+      <Word>input</Word>
+      <Word>int</Word>
+      <Word>isinstance</Word>
+      <Word>issubclass</Word>
+      <Word>iter</Word>
+      <Word>len</Word>
+      <Word>list</Word>
+      <Word>locals</Word>
+      <Word>long</Word>
+      <Word>map</Word>
+      <Word>max</Word>
+      <Word>memoryview</Word>
+      <Word>min</Word>
+      <Word>next</Word>
+      <Word>object</Word>
+      <Word>oct</Word>
+      <Word>open</Word>
+      <Word>ord</Word>
+      <Word>pow</Word>
+      <Word>property</Word>
+      <Word>range</Word>
+      <Word>raw_input</Word>
+      <Word>reduce</Word>
+      <Word>reload</Word>
+      <Word>repr</Word>
+      <Word>reversed</Word>
+      <Word>round</Word>
+      <Word>set</Word>
+      <Word>setattr</Word>
+      <Word>slice</Word>
+      <Word>sorted</Word>
+      <Word>staticmethod</Word>
+      <Word>str</Word>
+      <Word>sum</Word>
+      <Word>super</Word>
+      <Word>tuple</Word>
+      <Word>type</Word>
+      <Word>unichr</Word>
+      <Word>unicode</Word>
+      <Word>vars</Word>
+      <Word>xrange</Word>
+      <Word>zip</Word>
+      <Word>__import__</Word>
+      <Word>Exception</Word>
+      <Word>BaseException</Word>
+      <Word>ValueError</Word>
+      <Word>TypeError</Word>
+      <Word>KeyError</Word>
+      <Word>IndexError</Word>
+      <Word>AttributeError</Word>
+      <Word>NameError</Word>
+      <Word>RuntimeError</Word>
+      <Word>StopIteration</Word>
+      <Word>NotImplementedError</Word>
+      <Word>ImportError</Word>
+      <Word>IOError</Word>
+      <Word>OSError</Word>
+      <Word>KeyboardInterrupt</Word>
+      <Word>ZeroDivisionError</Word>
+      <Word>AssertionError</Word>
+    </Keywords>
+
+    <Rule color="Dunder">\b__\w+__\b</Rule>
+    <Rule color="Call">\b[A-Za-z_]\w*(?=\s*\()</Rule>
+    <Rule color="Number">\b0[xX][0-9a-fA-F]+[lL]?\b|(\b\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?[jJlL]?\b</Rule>
+    <Rule color="Operator">[-+*/%=&lt;&gt;!&amp;|^~]+</Rule>
+  </RuleSet>
+</SyntaxDefinition>

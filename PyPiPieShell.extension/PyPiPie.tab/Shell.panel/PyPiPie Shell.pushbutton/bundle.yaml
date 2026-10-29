@@ -1,0 +1,12 @@
+title: PyPiPie Shell
+author: Aaron Rumple, AIA
+context: zero-doc
+tooltip: |
+   Python editor and REPL connected to the running Revit session.
+   AvalonEdit editor with Python highlighting, Revit API autocomplete,
+   signature help and hover tips; follows Revit's light/dark theme.
+
+   Click: open in the last chosen mode (modeless window by default).
+   Shift+Click: choose Modeless, Modal or Docked.
+
+   Runs real code against the model. Use with caution.

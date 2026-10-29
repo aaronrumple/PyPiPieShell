@@ -1,0 +1,392 @@
+<!--
+    PyPiPie Shell view.  Loaded with XamlReader and placed inside a host
+    (modal / modeless window or Revit dockable pane), so it has no x:Class.
+    Colours are DynamicResources published by theme.apply_resources():
+      pyRevit<Name>Brush  - pyRevit 7 palette (also used by pyRevit's Theme.xaml)
+      PPS.<Name>          - shell-specific colours
+    The AvalonEdit editors are created in code and placed in EditorHost,
+    OutputHost and ReplHost.
+-->
+<Grid xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      x:Name="Root"
+      Background="{DynamicResource pyRevitWindowBackgroundBrush}"
+      TextElement.Foreground="{DynamicResource pyRevitWindowForegroundBrush}"
+      UseLayoutRounding="True"
+      SnapsToDevicePixels="True">
+
+    <Grid.Resources>
+        <Style x:Key="ToolButton" TargetType="Button">
+            <Setter Property="MinWidth" Value="26"/>
+            <Setter Property="Height" Value="26"/>
+            <Setter Property="Padding" Value="6,0"/>
+            <Setter Property="Margin" Value="0,0,2,0"/>
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Foreground" Value="{DynamicResource pyRevitWindowForegroundBrush}"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1"
+                                CornerRadius="4" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource pyRevitControlHoverBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource pyRevitControlPressedBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.4"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="Glyph" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Segoe Fluent Icons, Segoe MDL2 Assets"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <Style x:Key="ToolLabel" TargetType="TextBlock">
+            <Setter Property="Margin" Value="5,0,0,0"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="FontSize" Value="12"/>
+        </Style>
+
+        <Style x:Key="Sep" TargetType="Border">
+            <Setter Property="Width" Value="1"/>
+            <Setter Property="Height" Value="18"/>
+            <Setter Property="Margin" Value="5,0,7,0"/>
+            <Setter Property="Background" Value="{DynamicResource pyRevitControlBorderBrush}"/>
+        </Style>
+
+        <Style x:Key="FieldBox" TargetType="TextBox">
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="FontFamily" Value="Cascadia Mono, Consolas"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="4,0"/>
+            <Setter Property="Background" Value="{DynamicResource pyRevitControlBackgroundBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource pyRevitWindowForegroundBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource pyRevitControlBorderBrush}"/>
+            <Setter Property="CaretBrush" Value="{DynamicResource pyRevitWindowForegroundBrush}"/>
+            <Setter Property="SelectionBrush" Value="{DynamicResource PPS.Selection}"/>
+        </Style>
+
+        <Style x:Key="PaneBorder" TargetType="Border">
+            <Setter Property="BorderBrush" Value="{DynamicResource pyRevitControlBorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="ClipToBounds" Value="True"/>
+        </Style>
+    </Grid.Resources>
+
+    <Grid.RowDefinitions>
+        <RowDefinition Height="Auto"/>   <!-- 0 toolbar -->
+        <RowDefinition Height="3*" MinHeight="80"/>  <!-- 1 editor -->
+        <RowDefinition Height="6"/>      <!-- 2 splitter -->
+        <RowDefinition Height="2*" MinHeight="70"/>  <!-- 3 output + repl -->
+        <RowDefinition Height="Auto"/>   <!-- 4 find bar -->
+        <RowDefinition Height="Auto"/>   <!-- 5 status -->
+    </Grid.RowDefinitions>
+
+    <!-- ===================== toolbar ===================== -->
+    <Border Grid.Row="0" Padding="6,5,6,5"
+            Background="{DynamicResource pyRevitChromeBackgroundBrush}"
+            BorderBrush="{DynamicResource pyRevitControlBorderBrush}" BorderThickness="0,0,0,1">
+        <DockPanel LastChildFill="False">
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                <TextBlock Text="Txn" VerticalAlignment="Center" Margin="0,0,4,0" FontSize="11"
+                           Foreground="{DynamicResource pyRevitSubtleForegroundBrush}"/>
+                <ComboBox x:Name="TxnModeCombo" Width="78" Height="24" Margin="0,0,6,0" Focusable="False"
+                          ToolTip="Transaction mode&#10;Auto: wrap runs in a Transaction (a TransactionGroup if the code starts its own)&#10;Group: one TransactionGroup per run&#10;None: no wrapping">
+                    <ComboBoxItem Content="Auto"/>
+                    <ComboBoxItem Content="Group"/>
+                    <ComboBoxItem Content="None"/>
+                </ComboBox>
+                <Button x:Name="SettingsButton" Style="{StaticResource ToolButton}" ToolTip="Settings">
+                    <TextBlock Style="{StaticResource Glyph}" Text="&#xE713;"/>
+                </Button>
+                <Button x:Name="HelpButton" Style="{StaticResource ToolButton}"
+                        ToolTip="Open the PyPiPie Shell help (F1)">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Style="{StaticResource Glyph}" Text="&#xE897;"/>
+                        <TextBlock Style="{StaticResource ToolLabel}" Text="Help"/>
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+
+            <WrapPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
+                <Button x:Name="RunButton" Height="26" MinWidth="64" Margin="0,0,4,0" Padding="8,0"
+                        Focusable="False" Cursor="Hand"
+                        ToolTip="Run (F5)&#10;Ctrl+Enter runs the selection or current line">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Bd" CornerRadius="4" Padding="{TemplateBinding Padding}"
+                                    Background="{DynamicResource PPS.RunBackground}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Style="{StaticResource Glyph}" Text="&#xE768;"
+                                               Foreground="{DynamicResource PPS.RunForeground}"/>
+                                    <TextBlock Text="Run" Margin="6,0,0,0" FontWeight="SemiBold"
+                                               VerticalAlignment="Center"
+                                               Foreground="{DynamicResource PPS.RunForeground}"/>
+                                </StackPanel>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bd" Property="Opacity" Value="0.88"/>
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter TargetName="Bd" Property="Opacity" Value="0.4"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+                <Button x:Name="RunSelectionButton" Style="{StaticResource ToolButton}"
+                        ToolTip="Run selection / current line (Ctrl+Enter)">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Style="{StaticResource Glyph}" Text="&#xE8A4;"/>
+                        <TextBlock Style="{StaticResource ToolLabel}" Text="Selection"/>
+                    </StackPanel>
+                </Button>
+                <Button x:Name="StopButton" Style="{StaticResource ToolButton}" IsEnabled="False"
+                        ToolTip="Cancel a queued run.&#10;Hold Esc to interrupt a running script.">
+                    <TextBlock Style="{StaticResource Glyph}" Text="&#xE71A;"/>
+                </Button>
+
+                <Border Style="{StaticResource Sep}"/>
+
+                <Button x:Name="NewButton" Style="{StaticResource ToolButton}" ToolTip="New (Ctrl+N)">
+                    <TextBlock Style="{StaticResource Glyph}" Text="&#xE8A5;"/>
+                </Button>
+                <Button x:Name="OpenButton" Style="{StaticResource ToolButton}" ToolTip="Open (Ctrl+O)">
+                    <TextBlock Style="{StaticResource Glyph}" Text="&#xE8E5;"/>
+                </Button>
+                <Button x:Name="SaveButton" Style="{StaticResource ToolButton}" ToolTip="Save (Ctrl+S)">
+                    <TextBlock Style="{StaticResource Glyph}" Text="&#xE74E;"/>
+                </Button>
+                <Button x:Name="SaveAsButton" Style="{StaticResource ToolButton}" ToolTip="Save As (Ctrl+Shift+S)">
+                    <TextBlock Style="{StaticResource Glyph}" Text="&#xE792;"/>
+                </Button>
+
+                <Border Style="{StaticResource Sep}"/>
+
+                <Button x:Name="UndoButton" Style="{StaticResource ToolButton}" ToolTip="Undo (Ctrl+Z)">
+                    <TextBlock Style="{StaticResource Glyph}" Text="&#xE7A7;"/>
+                </Button>
+                <Button x:Name="RedoButton" Style="{StaticResource ToolButton}" ToolTip="Redo (Ctrl+Y)">
+                    <TextBlock Style="{StaticResource Glyph}" Text="&#xE7A6;"/>
+                </Button>
+                <Button x:Name="CommentButton" Style="{StaticResource ToolButton}" ToolTip="Comment lines (Ctrl+K)">
+                    <TextBlock Text="#" FontFamily="Consolas" FontWeight="Bold" VerticalAlignment="Center"/>
+                </Button>
+                <Button x:Name="UncommentButton" Style="{StaticResource ToolButton}" ToolTip="Uncomment lines (Ctrl+U)&#10;Ctrl+/ toggles">
+                    <TextBlock Text="#&#x0336;" FontFamily="Consolas" VerticalAlignment="Center"
+                               Foreground="{DynamicResource pyRevitSubtleForegroundBrush}"/>
+                </Button>
+                <Button x:Name="IndentButton" Style="{StaticResource ToolButton}" ToolTip="Indent (Tab)">
+                    <TextBlock Style="{StaticResource Glyph}" Text="&#xE291;"/>
+                </Button>
+                <Button x:Name="OutdentButton" Style="{StaticResource ToolButton}" ToolTip="Outdent (Shift+Tab)">
+                    <TextBlock Style="{StaticResource Glyph}" Text="&#xE290;"/>
+                </Button>
+                <Button x:Name="DuplicateButton" Style="{StaticResource ToolButton}" ToolTip="Duplicate (Ctrl+D)">
+                    <TextBlock Style="{StaticResource Glyph}" Text="&#xE8C8;"/>
+                </Button>
+                <Button x:Name="DeleteLineButton" Style="{StaticResource ToolButton}" ToolTip="Delete lines (Ctrl+Shift+K)">
+                    <TextBlock Style="{StaticResource Glyph}" Text="&#xE74D;"/>
+                </Button>
+                <Button x:Name="FindToggleButton" Style="{StaticResource ToolButton}" ToolTip="Find / Replace (Ctrl+F, Ctrl+H)">
+                    <TextBlock Style="{StaticResource Glyph}" Text="&#xE721;"/>
+                </Button>
+            </WrapPanel>
+        </DockPanel>
+    </Border>
+
+    <!-- ===================== editor ===================== -->
+    <Border x:Name="EditorBorder" Grid.Row="1" Style="{StaticResource PaneBorder}" Margin="6,6,6,0"
+            Background="{DynamicResource PPS.EditorBackground}">
+        <ContentControl x:Name="EditorHost" Focusable="False"/>
+    </Border>
+
+    <GridSplitter Grid.Row="2" HorizontalAlignment="Stretch" VerticalAlignment="Center" Height="4"
+                  Margin="6,0" Focusable="False" ResizeDirection="Rows" ResizeBehavior="PreviousAndNext"
+                  Background="{DynamicResource pyRevitControlBorderBrush}" Opacity="0.6"/>
+
+    <!-- ===================== output + REPL ===================== -->
+    <Border Grid.Row="3" Style="{StaticResource PaneBorder}" Margin="6,0,6,0"
+            Background="{DynamicResource PPS.OutputBackground}">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <DockPanel Grid.Row="0" LastChildFill="True" Margin="6,2,4,2">
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                    <Button x:Name="CopyOutputButton" Style="{StaticResource ToolButton}" Height="22" ToolTip="Copy output">
+                        <TextBlock Style="{StaticResource Glyph}" FontSize="12" Text="&#xE8C8;"/>
+                    </Button>
+                    <Button x:Name="ResetSessionButton" Style="{StaticResource ToolButton}" Height="22"
+                            ToolTip="Reset session (clears variables)">
+                        <TextBlock Style="{StaticResource Glyph}" FontSize="12" Text="&#xE72C;"/>
+                    </Button>
+                    <Button x:Name="ClearOutputButton" Style="{StaticResource ToolButton}" Height="22" ToolTip="Clear output (Ctrl+L)">
+                        <TextBlock Style="{StaticResource Glyph}" FontSize="12" Text="&#xE894;"/>
+                    </Button>
+                </StackPanel>
+                <TextBlock Text="OUTPUT" FontSize="10" FontWeight="SemiBold" VerticalAlignment="Center"
+                           Foreground="{DynamicResource pyRevitSubtleForegroundBrush}"/>
+            </DockPanel>
+
+            <ContentControl x:Name="OutputHost" Grid.Row="1" Focusable="False"/>
+
+            <Border Grid.Row="2" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource pyRevitControlBorderBrush}"
+                    Background="{DynamicResource PPS.EditorBackground}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock x:Name="ReplPrompt" Grid.Column="0" Text="&gt;&gt;&gt;" Margin="8,4,2,0"
+                               VerticalAlignment="Top" FontFamily="Cascadia Mono, Consolas" FontWeight="Bold"
+                               Foreground="{DynamicResource PPS.Prompt}"
+                               ToolTip="REPL: Enter runs a complete statement, Shift+Enter adds a line,&#10;Up/Down browse history, Esc clears"/>
+                    <ContentControl x:Name="ReplHost" Grid.Column="1" Focusable="False" MaxHeight="160" MinHeight="22"/>
+                </Grid>
+            </Border>
+        </Grid>
+    </Border>
+
+    <!-- ===================== find / replace / go to ===================== -->
+    <Border x:Name="FindBar" Grid.Row="4" Margin="6,6,6,0" Padding="6,5,6,0"
+            Style="{StaticResource PaneBorder}" Background="{DynamicResource pyRevitChromeBackgroundBrush}">
+        <!--
+            WidthProbe is a XAML-only breakpoint: when the bar is narrower than
+            1000 DIPs its computed horizontal scrollbar becomes visible and the
+            groups re-flow into a compact multi-row layout.
+        -->
+        <Grid ClipToBounds="True">
+            <ScrollViewer x:Name="WidthProbe" Height="18" VerticalAlignment="Top" HorizontalAlignment="Stretch"
+                          HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled"
+                          IsHitTestVisible="False" Focusable="False" Opacity="0" Panel.ZIndex="0">
+                <Border Width="1000" Height="1"/>
+            </ScrollViewer>
+
+            <Grid x:Name="SearchToolsGrid" HorizontalAlignment="Left" Panel.ZIndex="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Find -->
+                <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.Column="0" Margin="0,0,14,5">
+                    <TextBox x:Name="FindInputBox" Width="210" Style="{StaticResource FieldBox}"
+                             ToolTip="Find (Ctrl+F). Enter = next, Shift+Enter = previous"/>
+                    <Button x:Name="FindPrevButton" Style="{StaticResource ToolButton}" Margin="3,0,0,0" ToolTip="Previous (Shift+F3)">
+                        <TextBlock Style="{StaticResource Glyph}" Text="&#xE70E;"/>
+                    </Button>
+                    <Button x:Name="FindButton" Style="{StaticResource ToolButton}" ToolTip="Next (F3)">
+                        <TextBlock Style="{StaticResource Glyph}" Text="&#xE70D;"/>
+                    </Button>
+                    <TextBlock x:Name="FindCountText" MinWidth="54" Margin="4,0,0,0" FontSize="11" VerticalAlignment="Center"
+                               Foreground="{DynamicResource pyRevitSubtleForegroundBrush}"/>
+                </StackPanel>
+
+                <!-- Replace -->
+                <StackPanel Orientation="Horizontal" Margin="0,0,14,5">
+                    <StackPanel.Style>
+                        <Style TargetType="StackPanel">
+                            <Setter Property="Grid.Row" Value="0"/>
+                            <Setter Property="Grid.Column" Value="1"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ElementName=WidthProbe, Path=ComputedHorizontalScrollBarVisibility}" Value="Visible">
+                                    <Setter Property="Grid.Row" Value="1"/>
+                                    <Setter Property="Grid.Column" Value="0"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </StackPanel.Style>
+                    <TextBox x:Name="ReplaceInputBox" Width="170" Style="{StaticResource FieldBox}"
+                             ToolTip="Replace with (Ctrl+H). With Regex on, \1 inserts group 1"/>
+                    <Button x:Name="ReplaceButton" Style="{StaticResource ToolButton}" Margin="3,0,0,0" ToolTip="Replace">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Style="{StaticResource Glyph}" Text="&#xE8AB;"/>
+                            <TextBlock Style="{StaticResource ToolLabel}" Text="Replace"/>
+                        </StackPanel>
+                    </Button>
+                    <Button x:Name="ReplaceAllButton" Style="{StaticResource ToolButton}" ToolTip="Replace all (one undo step)">
+                        <TextBlock Style="{StaticResource ToolLabel}" Margin="0" Text="All"/>
+                    </Button>
+                </StackPanel>
+
+                <!-- options + go to -->
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                    <StackPanel.Style>
+                        <Style TargetType="StackPanel">
+                            <Setter Property="Grid.Row" Value="0"/>
+                            <Setter Property="Grid.Column" Value="2"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ElementName=WidthProbe, Path=ComputedHorizontalScrollBarVisibility}" Value="Visible">
+                                    <Setter Property="Grid.Row" Value="2"/>
+                                    <Setter Property="Grid.Column" Value="0"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </StackPanel.Style>
+                    <CheckBox x:Name="MatchCaseBox" Content="Aa" VerticalAlignment="Center" Margin="0,0,8,0" Focusable="False" ToolTip="Match case"/>
+                    <CheckBox x:Name="WholeWordBox" Content="Word" VerticalAlignment="Center" Margin="0,0,8,0" Focusable="False" ToolTip="Whole word"/>
+                    <CheckBox x:Name="RegexBox" Content=".*" VerticalAlignment="Center" Margin="0,0,14,0" Focusable="False" ToolTip="Regular expression"/>
+                    <TextBox x:Name="GotoInputBox" Width="56" Style="{StaticResource FieldBox}" ToolTip="Line number (Ctrl+G)"/>
+                    <Button x:Name="GotoButton" Style="{StaticResource ToolButton}" Margin="3,0,0,0" ToolTip="Go to line">
+                        <TextBlock Style="{StaticResource ToolLabel}" Margin="0" Text="Go to"/>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Grid>
+    </Border>
+
+    <!-- ===================== status bar ===================== -->
+    <Border x:Name="StatusBorder" Grid.Row="5" Margin="6" Padding="8,3"
+            Style="{StaticResource PaneBorder}" Background="{DynamicResource PPS.StatusBackground}">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock x:Name="StatusText" Grid.Column="0" Text="Ready" TextTrimming="CharacterEllipsis"
+                       VerticalAlignment="Center" FontSize="12"/>
+            <TextBlock x:Name="StatusMode" Grid.Column="1" Margin="12,0,0,0" FontSize="11" VerticalAlignment="Center"
+                       Foreground="{DynamicResource pyRevitSubtleForegroundBrush}"/>
+            <TextBlock x:Name="StatusTxn" Grid.Column="2" Margin="12,0,0,0" FontSize="11" VerticalAlignment="Center"
+                       Foreground="{DynamicResource pyRevitSubtleForegroundBrush}"/>
+            <TextBlock x:Name="StatusCaret" Grid.Column="3" Margin="12,0,0,0" FontSize="11" VerticalAlignment="Center"
+                       FontFamily="Cascadia Mono, Consolas" Text="Ln 1, Col 1"/>
+            <TextBlock x:Name="StatusDirty" Grid.Column="4" Margin="12,0,0,0" FontSize="12" VerticalAlignment="Center"
+                       FontWeight="Bold" Foreground="{DynamicResource PPS.Accent}"/>
+            <TextBlock x:Name="StatusFile" Grid.Column="5" Margin="4,0,0,0" FontSize="12" VerticalAlignment="Center"
+                       MaxWidth="260" TextTrimming="CharacterEllipsis" Text="untitled.py"/>
+        </Grid>
+    </Border>
+</Grid>
