@@ -12,7 +12,7 @@ Public API::
     pypipieshell.register_dockable_pane()        # from the extension startup.py
 """
 
-__version__ = "2.0.0"
+__version__ = "2.1.0"
 
 MODES = ("Modeless", "Modal", "Docked")
 

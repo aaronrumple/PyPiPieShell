@@ -363,30 +363,55 @@
         </Grid>
     </Border>
 
-    <!-- ===================== status bar ===================== -->
-    <Border x:Name="StatusBorder" Grid.Row="5" Margin="6" Padding="8,3"
-            Style="{StaticResource PaneBorder}" Background="{DynamicResource PPS.StatusBackground}">
+    <!-- ===================== status bar (PyPiPie branding) ===================== -->
+    <Border x:Name="StatusBorder" Grid.Row="5" Margin="0,6,0,0" Padding="10,4"
+            Background="{DynamicResource PPS.StatusBackground}"
+            BorderBrush="{DynamicResource pyRevitControlBorderBrush}" BorderThickness="0,1,0,0">
         <Grid>
             <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <TextBlock x:Name="StatusText" Grid.Column="0" Text="Ready" TextTrimming="CharacterEllipsis"
-                       VerticalAlignment="Center" FontSize="12"/>
-            <TextBlock x:Name="StatusMode" Grid.Column="1" Margin="12,0,0,0" FontSize="11" VerticalAlignment="Center"
+            <TextBlock x:Name="CreditText" Grid.Column="0" VerticalAlignment="Center" FontSize="12"
+                       Foreground="{DynamicResource pyRevitSubtleForegroundBrush}">
+                <Run Text="Crafted by: "/><Hyperlink x:Name="CreditLink" NavigateUri="https://www.linkedin.com/in/aaronrumple/"
+                           ToolTip="Aaron Rumple on LinkedIn">
+                    <Hyperlink.Style>
+                        <Style TargetType="Hyperlink">
+                            <Setter Property="Foreground" Value="{DynamicResource pyRevitWindowForegroundBrush}"/>
+                            <Setter Property="TextDecorations" Value="{x:Null}"/>
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Foreground" Value="{DynamicResource PPS.Accent}"/>
+                                    <Setter Property="TextDecorations" Value="Underline"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Hyperlink.Style>Aaron Rumple, AIA</Hyperlink>
+            </TextBlock>
+            <Border Grid.Column="1" Width="1" Margin="10,2" Background="{DynamicResource pyRevitControlBorderBrush}"/>
+            <TextBlock x:Name="StatusText" Grid.Column="2" TextTrimming="CharacterEllipsis"
+                       VerticalAlignment="Center" FontSize="12"
+                       Text="F5 runs the editor, Ctrl+Enter the selection; the &gt;&gt;&gt; line runs statements. F1 for help."/>
+            <TextBlock x:Name="StatusMode" Grid.Column="3" Margin="12,0,0,0" FontSize="11" VerticalAlignment="Center"
                        Foreground="{DynamicResource pyRevitSubtleForegroundBrush}"/>
-            <TextBlock x:Name="StatusTxn" Grid.Column="2" Margin="12,0,0,0" FontSize="11" VerticalAlignment="Center"
+            <TextBlock x:Name="StatusTxn" Grid.Column="4" Margin="12,0,0,0" FontSize="11" VerticalAlignment="Center"
                        Foreground="{DynamicResource pyRevitSubtleForegroundBrush}"/>
-            <TextBlock x:Name="StatusCaret" Grid.Column="3" Margin="12,0,0,0" FontSize="11" VerticalAlignment="Center"
+            <TextBlock x:Name="StatusCaret" Grid.Column="5" Margin="12,0,0,0" FontSize="11" VerticalAlignment="Center"
                        FontFamily="Cascadia Mono, Consolas" Text="Ln 1, Col 1"/>
-            <TextBlock x:Name="StatusDirty" Grid.Column="4" Margin="12,0,0,0" FontSize="12" VerticalAlignment="Center"
+            <TextBlock x:Name="StatusDirty" Grid.Column="6" Margin="12,0,0,0" FontSize="12" VerticalAlignment="Center"
                        FontWeight="Bold" Foreground="{DynamicResource PPS.Accent}"/>
-            <TextBlock x:Name="StatusFile" Grid.Column="5" Margin="4,0,0,0" FontSize="12" VerticalAlignment="Center"
-                       MaxWidth="260" TextTrimming="CharacterEllipsis" Text="untitled.py"/>
+            <TextBlock x:Name="StatusFile" Grid.Column="7" Margin="4,0,0,0" FontSize="12" VerticalAlignment="Center"
+                       MaxWidth="240" TextTrimming="CharacterEllipsis" Text="untitled.py"/>
+            <TextBlock x:Name="VersionText" Grid.Column="8" Margin="14,0,0,0" FontSize="11" VerticalAlignment="Center"
+                       Foreground="{DynamicResource pyRevitSubtleForegroundBrush}" ToolTip="PyPiPie Shell version"/>
         </Grid>
     </Border>
 </Grid>

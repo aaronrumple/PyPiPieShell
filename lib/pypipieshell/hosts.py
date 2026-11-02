@@ -9,7 +9,7 @@ clr.AddReference("WindowsBase")
 
 import System  # noqa: E402
 from System import AppDomain  # noqa: E402
-from System.Windows import WindowState, Visibility  # noqa: E402
+from System.Windows import WindowState, Visibility, Thickness  # noqa: E402
 
 from pyrevit import forms  # noqa: E402
 
@@ -19,6 +19,7 @@ from pypipieshell.execution import DirectExecutor, ExternalEventExecutor
 HERE = os.path.dirname(os.path.abspath(__file__))
 WINDOW_XAML = os.path.join(HERE, "resources", "ShellWindow.xaml")
 PANEL_XAML = os.path.join(HERE, "resources", "ShellPanel.xaml")
+LOGO_PNG = os.path.join(HERE, "resources", "pypipieshell.png")
 
 PANEL_ID = "7e6cb7e3-f2f5-4f7d-8db3-4c3b3c62d941"
 MODELESS_KEY = "PyPiPieShell.ModelessWindow"
@@ -47,24 +48,66 @@ class ShellWindow(forms.WPFWindow):
         controller_cls = _controller_class()
         self.controller = controller_cls(uiapp, executor, "Modal" if modal else "Modeless", host=self)
         self.HostContent.Content = self.controller.root
+        self._setup_chrome()
         self._restore_placement()
         self.Closing += self._on_closing
         self.Closed += self._on_closed
         self.Loaded += lambda s, e: self.controller.focus_editor()
         self.on_theme_applied(self.controller.palette)
+        self.on_title_changed(self.controller.file_display_name(), False)
+
+    # -- PyPiPie title bar ------------------------------------------------
+    def _setup_chrome(self):
+        try:
+            from System import Uri
+            from System.Windows.Media.Imaging import BitmapImage
+            img = BitmapImage(Uri(LOGO_PNG))
+            self.Icon = img
+            self.TitleIcon.Source = img
+        except Exception:
+            pass
+        self.CapHelp.Click += lambda s, e: self.controller.open_help()
+        self.CapMin.Click += lambda s, e: self._minimize()
+        self.CapMax.Click += lambda s, e: self._toggle_max()
+        self.CapClose.Click += lambda s, e: self.Close()
+        self.StateChanged += self._on_state
+
+    def _minimize(self):
+        # a modal dialog cannot minimize on its own: minimize Revit instead
+        if self.modal and self.Owner is None:
+            try:
+                from System.Windows import Application
+                Application.Current.MainWindow.WindowState = WindowState.Minimized
+                return
+            except Exception:
+                pass
+        self.WindowState = WindowState.Minimized
+
+    def _toggle_max(self):
+        if self.WindowState == WindowState.Maximized:
+            self.WindowState = WindowState.Normal
+        else:
+            self.WindowState = WindowState.Maximized
+
+    def _on_state(self, sender, args):
+        maxed = self.WindowState == WindowState.Maximized
+        # a maximized WindowChrome window overhangs the screen by the resize border
+        self.RootGrid.Margin = Thickness(7) if maxed else Thickness(0)
+        self.CapMax.Content = u"\ue923" if maxed else u"\ue922"
+        self.CapMax.ToolTip = "Restore" if maxed else "Maximize"
 
     # called by the controller
     def on_title_changed(self, name, modified):
-        mode = "modal" if self.modal else "modeless"
-        self.Title = u"PyPiPie Shell — {0}{1}  ({2})".format(name, u" ●" if modified else u"", mode)
+        mode = "Modal" if self.modal else "Modeless"
+        dirty = u" \u25cf" if modified else u""
+        self.TitleDetail.Text = u"{0}{1}".format(name, dirty)
+        self.Title = u"PyPiPie Shell - {0}{1} ({2})".format(name, dirty, mode)
 
     def on_theme_applied(self, palette):
+        from pypipieshell import theme as _theme
+        _theme.apply_resources(self, palette)
         self.Background = palette.brush("WindowBackground")
         self.Foreground = palette.brush("WindowForeground")
-        try:
-            self._apply_dark_titlebar()  # pyRevit 7 WPFWindow: themed caption bar
-        except Exception:
-            pass
 
     def _restore_placement(self):
         s = self.controller.settings

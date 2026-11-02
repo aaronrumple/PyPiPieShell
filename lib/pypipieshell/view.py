@@ -122,13 +122,15 @@ class ShellController(object):
         self._restore_buffer()
         self._unsubscribe_theme = theme.subscribe_theme_changed(uiapp, self._on_theme_changed)
 
-        self.StatusMode.Text = u"{0} · {1}".format(mode_label, _engine_label())
+        import pypipieshell
+        self.VersionText.Text = u"v" + pypipieshell.__version__
+        self.StatusMode.Text = u"{0} \u00b7 {1}".format(mode_label, _engine_label())
         self._update_txn_label()
         self._update_caret()
         self._update_file_labels()
         self._update_run_enabled()
-        self.output.append(u"PyPiPie Shell — {0}, Revit {1}, AvalonEdit {2}, {3} theme\n".format(
-            mode_label, year or "?", avalon.version(), self.palette.name), "info")
+        self.output.append(u"PyPiPie Shell {4} - {0}, Revit {1}, AvalonEdit {2}, {3} theme\n".format(
+            mode_label, year or "?", avalon.version(), self.palette.name, pypipieshell.__version__), "info")
         self.output.append(u"doc, uidoc, uiapp, app, selection, active_view, DB, UI, revit, forms, script "
                            u"are available. F5 runs the editor, the >>> line runs statements.\n", "info")
 
@@ -142,7 +144,7 @@ class ShellController(object):
                  "FindInputBox", "FindPrevButton", "FindButton", "FindCountText", "ReplaceInputBox",
                  "ReplaceButton", "ReplaceAllButton", "MatchCaseBox", "WholeWordBox", "RegexBox",
                  "GotoInputBox", "GotoButton", "StatusBorder", "StatusText", "StatusMode", "StatusTxn",
-                 "StatusCaret", "StatusDirty", "StatusFile"]
+                 "StatusCaret", "StatusDirty", "StatusFile", "CreditLink", "VersionText"]
         for n in names:
             el = self.root.FindName(n)
             if el is None:
@@ -202,6 +204,7 @@ class ShellController(object):
         self.repl_editor.TextChanged += lambda s, e: self._update_repl_prompt()
         self.output_editor.MouseDoubleClick += self._on_output_double_click
 
+        self.CreditLink.RequestNavigate += self._open_link
         self.root.PreviewKeyDown += self._on_root_key
         self.root.Unloaded += self._on_unloaded
 
@@ -322,7 +325,7 @@ class ShellController(object):
         check("Restore last buffer", "restore_buffer")
         menu.Items.Add(Separator())
         action(u"Font size +   (Ctrl+=)", lambda: self.py.zoom(1))
-        action(u"Font size −   (Ctrl+−)", lambda: self.py.zoom(-1))
+        action(u"Font size -   (Ctrl+-)", lambda: self.py.zoom(-1))
         action(u"Font size reset (Ctrl+0)", lambda: self._apply_zoom(13.0))
         menu.Items.Add(Separator())
         n = self.stub_index.module_count
@@ -519,11 +522,22 @@ class ShellController(object):
         if self.settings["restore_buffer"]:
             settings_mod.write_autosave(self.editor.Text)
 
+    def file_display_name(self):
+        return os.path.basename(self.current_file) if self.current_file else u"untitled.py"
+
+    def _open_link(self, sender, args):
+        try:
+            from System.Diagnostics import Process
+            Process.Start(args.Uri.AbsoluteUri)
+        except Exception:
+            pass
+        args.Handled = True
+
     def _update_file_labels(self):
-        name = os.path.basename(self.current_file) if self.current_file else u"untitled.py"
+        name = self.file_display_name()
         self.StatusFile.Text = name
         self.StatusFile.ToolTip = self.current_file or u"Not saved to a file (buffer is autosaved)"
-        self.StatusDirty.Text = u"●" if (self.editor.IsModified and self.current_file) else u""
+        self.StatusDirty.Text = u"\u25cf" if (self.editor.IsModified and self.current_file) else u""
         if self.host is not None and hasattr(self.host, "on_title_changed"):
             try:
                 self.host.on_title_changed(name, self.editor.IsModified)
@@ -663,7 +677,7 @@ class ShellController(object):
             self.flash("warning")
             return
         self.py.error_marker.segments = []
-        self.output.append(u"▶ Run {0}\n".format(label), "info")
+        self.output.append(u"\u25b6 Run {0}\n".format(label), "info")
         self._submit(code, EDITOR_FILENAME, "editor")
 
     def run_repl(self):
@@ -716,7 +730,7 @@ class ShellController(object):
     def _on_wait_tick(self, sender, args):
         self._wait_timer.Stop()
         if self._pending and self.executor.is_queued and self.executor.pending_count:
-            self.set_status(u"Waiting for Revit — finish or cancel the active command (Stop cancels the run)")
+            self.set_status(u"Waiting for Revit - finish or cancel the active command (Stop cancels the run)")
             self.flash("warning")
 
     def _on_stop(self, sender, args):
@@ -737,7 +751,7 @@ class ShellController(object):
             if result.wrapper:
                 msg += u" ({0})".format(result.wrapper)
             if req.kind == "editor":
-                self.output.append(u"✔ " + msg + u"\n", "result")
+                self.output.append(u"\u2714 " + msg + u"\n", "result")
             self.set_status(msg)
             self.flash("success")
         elif result.error == "cancelled":
